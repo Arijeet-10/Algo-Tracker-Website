@@ -33,9 +33,12 @@ import {
   Legend,
   ResponsiveContainer,
   ComposedChart,
+  Line,
 } from 'recharts';
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DashboardProps {}
 
@@ -91,6 +94,8 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     getCodeChefSubmissions
   );
 
+  const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string>("");
+
   const chartConfig = {
     codeforcesSubmissions: {
       label: "Codeforces Submissions",
@@ -123,6 +128,10 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode' })),
     ...codechefPlatform.submissions.map(s => ({ ...s, platform: 'CodeChef' })),
   ];
+
+  const filteredSubmissions = submissionStatusFilter
+    ? allSubmissions.filter(submission => submission.status === submissionStatusFilter)
+    : allSubmissions;
 
   return (
     <div className="grid gap-4">
@@ -171,8 +180,22 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Recent Submissions</CardTitle>
+          <Select onValueChange={setSubmissionStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="OK">OK</SelectItem>
+              <SelectItem value="Accepted">Accepted</SelectItem>
+              <SelectItem value="WRONG_ANSWER">Wrong Answer</SelectItem>
+              <SelectItem value="TLE">Time Limit Exceeded</SelectItem>
+              <SelectItem value="Compilation Error">Compilation Error</SelectItem>
+              <SelectItem value="Runtime Error">Runtime Error</SelectItem>
+            </SelectContent>
+          </Select>
         </CardHeader>
         <CardContent>
           <ScrollArea>
@@ -185,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allSubmissions.map((submission: any, index: number) => (
+                {filteredSubmissions.map((submission: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>{submission.platform}</TableCell>
                     <TableCell>
@@ -247,3 +270,5 @@ const PlatformCard = <User extends { username?: string; handle?: string; problem
 };
 
 export default Dashboard;
+
+    
