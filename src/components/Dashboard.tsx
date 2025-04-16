@@ -49,15 +49,18 @@ interface PlatformData<User, Submission> {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   setSubmissions: React.Dispatch<React.SetStateAction<Submission[]>>;
   fetchUser: (username: string) => Promise<void>;
+  ratingHistory: { rating: number; timestamp: number }[];
 }
 
 const usePlatform = <User, Submission>(
   getUser: (username: string) => Promise<User | null>,
-  getSubmissions: (username: string, limit: number) => Promise<Submission[]>
+  getSubmissions: (username: string, limit: number) => Promise<Submission[]>,
+  getRatingHistory?: (username: string) => Promise<{ rating: number; timestamp: number }[]>
 ): PlatformData<User, Submission> => {
   const [handle, setHandle] = useState<string>("");
   const [user, setUser] = useState<User | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [ratingHistory, setRatingHistory] = useState<{ rating: number; timestamp: number }[]>([])
 
   const fetchUser = async (username: string) => {
     if (username) {
@@ -65,6 +68,10 @@ const usePlatform = <User, Submission>(
       const submissions = await getSubmissions(username, 100);
       setUser(user);
       setSubmissions(submissions);
+        if (getRatingHistory) {
+            const history = await getRatingHistory(username);
+            setRatingHistory(history);
+        }
     }
   };
 
@@ -75,6 +82,7 @@ const usePlatform = <User, Submission>(
     submissions,
     setUser,
     setSubmissions,
+      ratingHistory,
     fetchUser,
   };
 };
@@ -82,7 +90,27 @@ const usePlatform = <User, Submission>(
 const Dashboard: React.FC<DashboardProps> = ({}) => {
   const codeforcesPlatform = usePlatform<CodeforcesUser, CodeforcesSubmission>(
     getCodeforcesUser,
-    getCodeforcesSubmissions
+    getCodeforcesSubmissions,
+      async (handle: string) => {
+          try {
+              const response = await fetch(`https://codeforces.com/api/user.rating?handle=${handle}`);
+              if (!response.ok) {
+                  console.error("Failed to fetch Codeforces rating history:", response.status);
+                  return [];
+              }
+              const data = await response.json();
+              if (data.status !== 'OK' || !data.result) {
+                  return [];
+              }
+              return data.result.map((ratingChange: any) => ({
+                  rating: ratingChange.newRating,
+                  timestamp: ratingChange.ratingUpdateTimeSeconds,
+              }));
+          } catch (error) {
+              console.error("Failed to fetch Codeforces rating history:", error);
+              return [];
+          }
+      }
   );
   const leetcodePlatform = usePlatform<LeetCodeUser, LeetCodeSubmission>(
     getLeetCodeUser,
@@ -114,25 +142,47 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   };
 
   const allSubmissions = [
-    ...codeforcesPlatform.submissions.map(s => ({ ...s, platform: 'Codeforces' })),
-    ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode' })),
-    ...hackerrankPlatform.submissions.map(s => ({ ...s, platform: 'HackerRank' })),
+    ...codeforcesPlatform.submissions.map(s => ({ ...s, platform: 'Codeforces', status: s.status ?? 'OK' })),
+    ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode', status: s.status ?? 'Accepted' })),
+    ...hackerrankPlatform.submissions.map(s => ({ ...s, platform: 'HackerRank', status: s.status ?? 'Accepted' })),
   ];
 
+    const statusMapping: { [key: string]: string } = {
+        OK: 'OK',
+        ACCEPTED: 'Accepted',
+        WRONG_ANSWER: 'Wrong Answer',
+        TLE: 'Time Limit Exceeded',
+        'Compilation Error': 'Compilation Error',
+        'Runtime Error': 'Runtime Error',
+        Accepted: 'Accepted'
+    };
+
   const filteredSubmissions = submissionStatusFilter
-    ? allSubmissions.filter(submission => submission.status === submissionStatusFilter)
+    ? allSubmissions.filter(submission => {
+      const normalizedStatus = statusMapping[submission.status] || submission.status;
+      return normalizedStatus === submissionStatusFilter
+    })
     : allSubmissions;
 
   const filteredCodeforcesSubmissions = submissionStatusFilter
-    ? codeforcesPlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
+    ? codeforcesPlatform.submissions.filter(submission => {
+      const normalizedStatus = statusMapping[submission.status] || submission.status;
+      return normalizedStatus === submissionStatusFilter;
+    }).length
     : codeforcesPlatform.submissions.length;
 
   const filteredLeetcodeSubmissions = submissionStatusFilter
-    ? leetcodePlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
+    ? leetcodePlatform.submissions.filter(submission => {
+      const normalizedStatus = statusMapping[submission.status] || submission.status;
+      return normalizedStatus === submissionStatusFilter
+    }).length
     : leetcodePlatform.submissions.length;
 
   const filteredHackerrankSubmissions = submissionStatusFilter
-    ? hackerrankPlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
+    ? hackerrankPlatform.submissions.filter(submission => {
+      const normalizedStatus = statusMapping[submission.status] || submission.status;
+      return normalizedStatus === submissionStatusFilter
+    }).length
     : hackerrankPlatform.submissions.length;
 
   const data = [
@@ -190,6 +240,25 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
         </CardContent>
       </Card>
 
+        {codeforcesPlatform.ratingHistory.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Codeforces Rating History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <ComposedChart data={codeforcesPlatform.ratingHistory}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="timestamp" tickFormatter={(timestamp) => new Date(timestamp * 1000).toLocaleDateString()} />
+                            <YAxis />
+                            <Tooltip labelFormatter={(timestamp) => new Date(timestamp * 1000).toLocaleDateString()}/>
+                            <Line type="monotone" dataKey="rating" stroke="hsl(var(--chart-1))" />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+        )}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Recent Submissions</CardTitle>
@@ -198,13 +267,13 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={null}>All Statuses</SelectItem>
-              <SelectItem value="OK">OK</SelectItem>
-              <SelectItem value="Accepted">Accepted</SelectItem>
-              <SelectItem value="WRONG_ANSWER">Wrong Answer</SelectItem>
-              <SelectItem value="TLE">Time Limit Exceeded</SelectItem>
-              <SelectItem value="Compilation Error">Compilation Error</SelectItem>
-              <SelectItem value="Runtime Error">Runtime Error</SelectItem>
+              <SelectItem value={""}>All Statuses</SelectItem>
+              <SelectItem value={"OK"}>OK</SelectItem>
+              <SelectItem value={"Accepted"}>Accepted</SelectItem>
+              <SelectItem value={"Wrong Answer"}>Wrong Answer</SelectItem>
+              <SelectItem value={"Time Limit Exceeded"}>Time Limit Exceeded</SelectItem>
+              <SelectItem value={"Compilation Error"}>Compilation Error</SelectItem>
+              <SelectItem value={"Runtime Error"}>Runtime Error</SelectItem>
             </SelectContent>
           </Select>
         </CardHeader>
@@ -281,5 +350,3 @@ const PlatformCard = <User extends { username?: string; handle?: string; problem
 };
 
 export default Dashboard;
-
-    
