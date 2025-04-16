@@ -40,18 +40,33 @@ const LEETCODE_API_URL = 'https://leetcode.com/api';
  */
 export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | null> {
   try {
-    const response = await fetch(`https://leetcode.com/graphql`, {
+    const response = await fetch(`https://leetcode.com/graphql/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': 'https://leetcode.com'
       },
       body: JSON.stringify({
         query: `
           query userProfile($username: String!) {
-            userProfile(username: $username) {
-              username
-              numSolved
+            allQuestionsCount {
+                difficulty
+                count
+            }
+            matchedUser(username: $username) {
+                username
+                problemsSolvedBeatsStats {
+                    difficulty
+                    percentage
+                }
+                submitStats {
+                    acSubmissionNum {
+                        difficulty
+                        count
+                        submissions
+                    }
+                }
             }
           }
         `,
@@ -64,14 +79,20 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
     }
 
     const data = await response.json();
-    if (!data.data?.userProfile) {
+    console.log('LeetCode user data:', data);
+
+    if (!data.data?.matchedUser) {
       return null;
     }
 
-    const userProfile = data.data.userProfile;
+    const userProfile = data.data.matchedUser;
+    const problemsSolved = userProfile.submitStats.acSubmissionNum.reduce(
+        (sum: number, submission: { count: number }) => sum + submission.count,
+        0
+      );
     return {
       username: userProfile.username,
-      problemsSolved: userProfile.numSolved,
+      problemsSolved: problemsSolved,
     };
   } catch (error) {
     console.error("Failed to fetch LeetCode user:", error);
@@ -91,23 +112,27 @@ export async function getLeetCodeSubmissions(
   limit: number
 ): Promise<LeetCodeSubmission[]> {
   try {
-    const response = await fetch(`https://leetcode.com/graphql`, {
+    const response = await fetch(`https://leetcode.com/graphql/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': 'https://leetcode.com'
       },
       body: JSON.stringify({
         query: `
-          query recentAcSubmissions($username: String!, $limit: Int!) {
-            recentAcSubmissions(username: $username, limit: $limit) {
-              title
-              statusDisplay
-              timestamp
+            query RecentSubmissions($username: String!, $limit: Int!) {
+                recentSubmissionList(username: $username, limit: $limit) {
+                    title
+                    statusDisplay
+                    timestamp
+                }
             }
-          }
         `,
-        variables: { username, limit },
+        variables: {
+            username: username,
+            limit: limit
+        }
       }),
     });
 
@@ -117,11 +142,11 @@ export async function getLeetCodeSubmissions(
 
     const data = await response.json();
 
-    if (!data.data?.recentAcSubmissions) {
+    if (!data.data?.recentSubmissionList) {
       return [];
     }
 
-    return data.data.recentAcSubmissions.map((submission: any) => ({
+    return data.data.recentSubmissionList.map((submission: any) => ({
       problemTitle: submission.title,
       status: submission.statusDisplay,
       timestamp: submission.timestamp,
@@ -131,5 +156,3 @@ export async function getLeetCodeSubmissions(
     return [];
   }
 }
-
-    

@@ -40,49 +40,55 @@ import { cn } from "@/lib/utils";
 
 interface DashboardProps {}
 
+interface PlatformData<User, Submission> {
+  handle: string;
+  user: User | null;
+  submissions: Submission[];
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  setSubmissions: React.Dispatch<React.SetStateAction<Submission[]>>;
+  fetchUser: (username: string) => Promise<void>;
+}
+
+const usePlatform = <User, Submission>(
+  getUser: (username: string) => Promise<User | null>,
+  getSubmissions: (username: string, limit: number) => Promise<Submission[]>
+): PlatformData<User, Submission> => {
+  const [handle, setHandle] = useState<string>("");
+  const [user, setUser] = useState<User | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+
+  const fetchUser = async (username: string) => {
+    if (username) {
+      const user = await getUser(username);
+      const submissions = await getSubmissions(username, 100);
+      setUser(user);
+      setSubmissions(submissions);
+    }
+  };
+
+  return {
+    handle,
+    user,
+    submissions,
+    setUser,
+    setSubmissions,
+    fetchUser,
+  };
+};
+
 const Dashboard: React.FC<DashboardProps> = ({}) => {
-  const [codeforcesHandle, setCodeforcesHandle] = useState<string>("");
-  const [leetcodeUsername, setLeetcodeUsername] = useState<string>("");
-  const [codechefUsername, setCodechefUsername] = useState<string>("");
-
-  const [codeforcesUser, setCodeforcesUser] = useState<CodeforcesUser | null>(null);
-  const [leetcodeUser, setLeetcodeUser] = useState<LeetCodeUser | null>(null);
-  const [codechefUser, setCodechefUser] = useState<CodeChefUser | null>(null);
-
-  const [codeforcesSubmissions, setCodeforcesSubmissions] = useState<CodeforcesSubmission[]>([]);
-  const [leetcodeSubmissions, setLeetcodeSubmissions] = useState<LeetCodeSubmission[]>([]);
-  const [codechefSubmissions, setCodechefSubmissions] = useState<CodeChefSubmission[]>([]);
-
-  useEffect(() => {
-    // You can load default usernames from local storage or environment variables here
-  }, []);
-
-  const handleCodeforcesSubmit = async () => {
-    if (codeforcesHandle) {
-      const user = await getCodeforcesUser(codeforcesHandle);
-      const submissions = await getCodeforcesSubmissions(codeforcesHandle, 100);
-      setCodeforcesUser(user);
-      setCodeforcesSubmissions(submissions);
-    }
-  };
-
-  const handleLeetcodeSubmit = async () => {
-    if (leetcodeUsername) {
-      const user = await getLeetCodeUser(leetcodeUsername);
-      const submissions = await getLeetCodeSubmissions(leetcodeUsername, 100);
-      setLeetcodeUser(user);
-      setLeetcodeSubmissions(submissions);
-    }
-  };
-
-  const handleCodechefSubmit = async () => {
-    if (codechefUsername) {
-      const user = await getCodeChefUser(codechefUsername);
-      const submissions = await getCodeChefSubmissions(codechefUsername, 100);
-      setCodechefUser(user);
-      setCodechefSubmissions(submissions);
-    }
-  };
+  const codeforcesPlatform = usePlatform<CodeforcesUser, CodeforcesSubmission>(
+    getCodeforcesUser,
+    getCodeforcesSubmissions
+  );
+  const leetcodePlatform = usePlatform<LeetCodeUser, LeetCodeSubmission>(
+    getLeetCodeUser,
+    getLeetCodeSubmissions
+  );
+  const codechefPlatform = usePlatform<CodeChefUser, CodeChefSubmission>(
+    getCodeChefUser,
+    getCodeChefSubmissions
+  );
 
   const chartConfig = {
     codeforcesSubmissions: {
@@ -105,89 +111,42 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const data = [
     {
       name: "Submissions",
-      codeforcesSubmissions: codeforcesSubmissions.length,
-      leetcodeSubmissions: leetcodeSubmissions.length,
-      codechefSubmissions: codechefSubmissions.length,
+      codeforcesSubmissions: codeforcesPlatform.submissions.length,
+      leetcodeSubmissions: leetcodePlatform.submissions.length,
+      codechefSubmissions: codechefPlatform.submissions.length,
     },
   ];
 
   const allSubmissions = [
-    ...codeforcesSubmissions.map(s => ({ ...s, platform: 'Codeforces' })),
-    ...leetcodeSubmissions.map(s => ({ ...s, platform: 'LeetCode' })),
-    ...codechefSubmissions.map(s => ({ ...s, platform: 'CodeChef' })),
+    ...codeforcesPlatform.submissions.map(s => ({ ...s, platform: 'Codeforces' })),
+    ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode' })),
+    ...codechefPlatform.submissions.map(s => ({ ...s, platform: 'CodeChef' })),
   ];
 
   return (
     <div className="grid gap-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Codeforces</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <Input
-                type="text"
-                placeholder="Codeforces Handle"
-                value={codeforcesHandle}
-                onChange={(e) => setCodeforcesHandle(e.target.value)}
-              />
-              <Button onClick={handleCodeforcesSubmit}>Fetch</Button>
-            </div>
-            {codeforcesUser && (
-              <div className="mt-4">
-                <p>Handle: {codeforcesUser.handle}</p>
-                <p>Rating: {codeforcesUser.rating}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>LeetCode</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <Input
-                type="text"
-                placeholder="LeetCode Username"
-                value={leetcodeUsername}
-                onChange={(e) => setLeetcodeUsername(e.target.value)}
-              />
-              <Button onClick={handleLeetcodeSubmit}>Fetch</Button>
-            </div>
-            {leetcodeUser && (
-              <div className="mt-4">
-                <p>Username: {leetcodeUser.username}</p>
-                <p>Problems Solved: {leetcodeUser.problemsSolved}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>CodeChef</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <Input
-                type="text"
-                placeholder="CodeChef Username"
-                value={codechefUsername}
-                onChange={(e) => setCodechefUsername(e.target.value)}
-              />
-              <Button onClick={handleCodechefSubmit}>Fetch</Button>
-            </div>
-            {codechefUser && (
-              <div className="mt-4">
-                <p>Username: {codechefUser.username}</p>
-                <p>Rating: {codechefUser.rating}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <PlatformCard
+          title="Codeforces"
+          handle={codeforcesPlatform.handle}
+          setHandle={ (value: string) => codeforcesPlatform.handle = value}
+          user={codeforcesPlatform.user}
+          onSubmit={() => codeforcesPlatform.fetchUser(codeforcesPlatform.handle)}
+        />
+        <PlatformCard
+          title="LeetCode"
+          handle={leetcodePlatform.handle}
+          setHandle={ (value: string) => leetcodePlatform.handle = value}
+          user={leetcodePlatform.user}
+          onSubmit={() => leetcodePlatform.fetchUser(leetcodePlatform.handle)}
+        />
+        <PlatformCard
+          title="CodeChef"
+          handle={codechefPlatform.handle}
+          setHandle={ (value: string) => codechefPlatform.handle = value}
+          user={codechefPlatform.user}
+          onSubmit={() => codechefPlatform.fetchUser(codechefPlatform.handle)}
+        />
       </div>
 
       <Card>
@@ -240,6 +199,49 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+interface PlatformCardProps<User> {
+  title: string;
+  handle: string;
+  setHandle: (value: string) => void;
+  user: User | null;
+  onSubmit: () => void;
+}
+
+const PlatformCard = <User extends { username?: string; handle?: string; problemsSolved?: number }>({
+  title,
+  handle,
+  setHandle,
+  user,
+  onSubmit,
+}: PlatformCardProps<User>) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center space-x-4">
+          <Input
+            type="text"
+            placeholder={`${title} Username`}
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+          />
+          <Button onClick={onSubmit}>Fetch</Button>
+        </div>
+        {user && (
+          <div className="mt-4">
+            {user.username && <p>Username: {user.username}</p>}
+            {user.handle && <p>Handle: {user.handle}</p>}
+            {user.problemsSolved && <p>Problems Solved: {user.problemsSolved}</p>}
+            {/* Add more user info here */}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
