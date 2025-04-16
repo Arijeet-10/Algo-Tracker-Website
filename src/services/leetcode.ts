@@ -67,10 +67,9 @@ const LEETCODE_API_URL = 'https://leetcode.com/graphql/';
  */
 export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | null> {
   try {
-    const response = await fetch(`https://leetcode-api-proxy.onrender.com/user/${username}`);
+    const response = await fetch(`https://leetcode-api-proxy.onrender.com/${username}`);
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`Failed to fetch LeetCode user for ${username}: ${response.status} ${response.statusText} - ${errorBody}`);
+      console.error(`Failed to fetch LeetCode user for ${username}: ${response.status}`);
       return null;
     }
 
@@ -101,15 +100,14 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
  */
 export async function getLeetCodeSubmissions(username: string): Promise<LeetCodeSubmission[]> {
   try {
-    const response = await fetch(`https://leetcode-api-proxy.onrender.com/recentSubmissions/${username}`);
+    const response = await fetch(`https://leetcode-api-proxy.onrender.com/${username}`);
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`Failed to fetch LeetCode submissions for ${username}: ${response.status} ${response.statusText} - ${errorBody}`);
+      console.error(`Failed to fetch LeetCode submissions for ${username}: ${response.status}`);
       return [];
     }
 
     const data = await response.json();
-    const submissions = data;
+    const submissions = data.recentSubmissions;
 
     if (!submissions || !Array.isArray(submissions)) {
       return [];
