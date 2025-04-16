@@ -30,18 +30,17 @@ export interface CodeChefSubmission {
   submissionDate: string;
 }
 
-const CODECHEF_API_URL = 'https://codechef.com/api/ratings/'; // Replace with the actual API endpoint
+const CODECHEF_API_URL = 'https://codechef-api.vercel.app/handle';
 
 /**
  * Asynchronously retrieves a CodeChef user's information.
  *
- * @param username The CodeChef user's username.
+ * @param handle The CodeChef user's handle.
  * @returns A promise that resolves to a CodeChefUser object.
  */
-export async function getCodeChefUser(username: string): Promise<CodeChefUser | null> {
+export async function getCodeChefUser(handle: string): Promise<CodeChefUser | null> {
   try {
-    // Call a 3rd party codechef API since Codechef does not expose a public API.
-    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`, {
+    const response = await fetch(`${CODECHEF_API_URL}/${handle}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -50,12 +49,14 @@ export async function getCodeChefUser(username: string): Promise<CodeChefUser | 
       return null;
     }
     const data = await response.json();
-    if (data.user === null) {
+
+    if (!data || !data.user_details) {
       return null;
     }
+
     return {
-      username: data.user.username,
-      rating: data.user.currentRating,
+      username: data.user_details.username,
+      rating: data.user_details.rating,
     };
   } catch (error) {
     console.error("Failed to fetch CodeChef user:", error);
@@ -66,16 +67,16 @@ export async function getCodeChefUser(username: string): Promise<CodeChefUser | 
 /**
  * Asynchronously retrieves a CodeChef user's recent submissions.
  *
- * @param username The CodeChef user's username.
+ * @param handle The CodeChef user's handle.
  * @param limit The number of submissions to retrieve.
  * @returns A promise that resolves to an array of CodeChefSubmission objects.
  */
 export async function getCodeChefSubmissions(
-  username: string,
+  handle: string,
   limit: number
 ): Promise<CodeChefSubmission[]> {
-   try {
-    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`, {
+  try {
+    const response = await fetch(`${CODECHEF_API_URL}/${handle}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -85,18 +86,18 @@ export async function getCodeChefSubmissions(
       return [];
     }
     const data = await response.json();
-     if (data.submissions === null) {
+
+    if (!data || !data.recent_submissions) {
       return [];
     }
-    return data.submissions.slice(0, limit).map((submission: any) => ({
-      problemCode: submission.problemCode,
-      status: submission.result,
-      submissionDate: submission.date,
+
+    return data.recent_submissions.slice(0, limit).map((submission: any) => ({
+      problemCode: submission.problem_code,
+      status: submission.status,
+      submissionDate: submission.submission_date,
     }));
   } catch (error) {
     console.error("Failed to fetch CodeChef submissions:", error);
     return [];
   }
 }
-
-    
