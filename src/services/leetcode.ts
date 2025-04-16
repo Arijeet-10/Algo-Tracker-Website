@@ -44,9 +44,6 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Referer': 'https://leetcode.com',
-        'Cookie': 'csrftoken=your_csrftoken; LEETCODE_SESSION=your_leetcode_session'
       },
       body: JSON.stringify({
         query: `
@@ -80,7 +77,6 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
     }
 
     const data = await response.json();
-    console.log('LeetCode user data:', data);
 
     if (!data.data?.matchedUser) {
       return null;
@@ -117,9 +113,6 @@ export async function getLeetCodeSubmissions(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Referer': 'https://leetcode.com',
-        'Cookie': 'csrftoken=your_csrftoken; LEETCODE_SESSION=your_leetcode_session'
       },
       body: JSON.stringify({
         query: `
