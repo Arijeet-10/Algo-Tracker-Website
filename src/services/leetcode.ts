@@ -17,6 +17,26 @@ export interface LeetCodeUser {
    * The number of problems solved by the user.
    */
   problemsSolved: number;
+  /**
+   * The number of easy problems solved by the user.
+   */
+  easySolved?: number;
+  /**
+   * The number of medium problems solved by the user.
+   */
+  mediumSolved?: number;
+  /**
+   * The number of hard problems solved by the user.
+   */
+  hardSolved?: number;
+  /**
+   * The total number of questions.
+   */
+  totalQuestions?: number;
+  /**
+   * The user's ranking.
+   */
+  ranking?: number;
 }
 
 /**
@@ -37,7 +57,7 @@ export interface LeetCodeSubmission {
   timestamp: number;
 }
 
-const LEETCODE_API_URL = 'https://leetcode-api-proxy.onrender.com';
+const LEETCODE_API_URL = 'https://leetcode.com/graphql/';
 
 /**
  * Asynchronously retrieves a LeetCode user's information.
@@ -47,9 +67,10 @@ const LEETCODE_API_URL = 'https://leetcode-api-proxy.onrender.com';
  */
 export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | null> {
   try {
-    const response = await fetch(`https://leetcode-api-proxy.onrender.com/${username}`);
+    const response = await fetch(`https://leetcode-api-proxy.onrender.com/user/${username}`);
     if (!response.ok) {
-      console.error(`Failed to fetch LeetCode user for ${username}: ${response.status}`);
+      const errorBody = await response.text();
+      console.error(`Failed to fetch LeetCode user for ${username}: ${response.status} ${response.statusText} - ${errorBody}`);
       return null;
     }
 
@@ -71,8 +92,6 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
 }
 
 
-
-
 /**
  * Asynchronously retrieves a LeetCode user's recent submissions.
  *
@@ -82,14 +101,15 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
  */
 export async function getLeetCodeSubmissions(username: string): Promise<LeetCodeSubmission[]> {
   try {
-    const response = await fetch(`https://leetcode-api-proxy.onrender.com/${username}`);
+    const response = await fetch(`https://leetcode-api-proxy.onrender.com/recentSubmissions/${username}`);
     if (!response.ok) {
-      console.error(`Failed to fetch LeetCode submissions for ${username}: ${response.status}`);
+      const errorBody = await response.text();
+      console.error(`Failed to fetch LeetCode submissions for ${username}: ${response.status} ${response.statusText} - ${errorBody}`);
       return [];
     }
 
     const data = await response.json();
-    const submissions = data.recentSubmissions;
+    const submissions = data;
 
     if (!submissions || !Array.isArray(submissions)) {
       return [];
@@ -105,5 +125,3 @@ export async function getLeetCodeSubmissions(username: string): Promise<LeetCode
     return [];
   }
 }
-
-

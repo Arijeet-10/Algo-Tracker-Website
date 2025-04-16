@@ -1,10 +1,9 @@
-"use client";
+'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { getCodeforcesUser, getCodeforcesSubmissions } from "@/services/codeforces";
 import { getLeetCodeUser, getLeetCodeSubmissions } from "@/services/leetcode";
-import { getHackerRankUser, getHackerRankSubmissions } from "@/services/hackerrank";
+import { getCodeChefUser, getCodeChefSubmissions } from "@/services/codechef";
 import {
   Table,
   TableBody,
@@ -17,12 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CodeforcesUser, CodeforcesSubmission } from "@/services/codeforces";
 import { LeetCodeUser, LeetCodeSubmission } from "@/services/leetcode";
-import { HackerRankUser, HackerRankSubmission } from "@/services/hackerrank";
+import { CodeChefUser, CodeChefSubmission } from "@/services/codechef";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Icons } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
+  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -32,16 +32,16 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Line,
+  LineChart,
   PieChart,
   Pie,
   Cell,
-  BarChart
 } from 'recharts';
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, User, FileCode, BarChart2, PieChart as PieChartIcon, LineChart, AlertCircle } from "lucide-react";
+import { Search, User, FileCode, BarChart2, PieChart as PieChartIcon, LineChart as LineChartIcon, AlertCircle } from "lucide-react";
 import _ from 'lodash';
 
 interface DashboardProps {}
@@ -69,13 +69,17 @@ const usePlatform = <User, Submission>(
 
   const fetchUser = async (username: string) => {
     if (username) {
-      const user = await getUser(username);
-      const submissions = await getSubmissions(username, 100);
-      setUser(user);
-      setSubmissions(submissions);
-      if (getRatingHistory) {
-        const history = await getRatingHistory(username);
-        setRatingHistory(history);
+      try {
+        const user = await getUser(username);
+        const submissions = await getSubmissions(username, 100);
+        setUser(user);
+        setSubmissions(submissions);
+        if (getRatingHistory) {
+          const history = await getRatingHistory(username);
+          setRatingHistory(history);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
     }
   };
@@ -121,9 +125,9 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     getLeetCodeUser,
     getLeetCodeSubmissions
   );
-  const hackerrankPlatform = usePlatform<HackerRankUser, HackerRankSubmission>(
-    getHackerRankUser,
-    getHackerRankSubmissions
+  const codechefPlatform = usePlatform<CodeChefUser, CodeChefSubmission>(
+    getCodeChefUser,
+    getCodeChefSubmissions
   );
 
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string | null>(null);
@@ -142,17 +146,17 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
       icon: Icons.file,
       color: "#3a0ca3",
     },
-    hackerrankSubmissions: {
-      label: "HackerRank",
+    codechefSubmissions: {
+      label: "CodeChef",
       icon: Icons.file,
       color: "#7209b7",
     },
   };
 
   const allSubmissions = [
-    ...codeforcesPlatform.submissions.map(s => ({ ...s, platform: 'Codeforces', status: s.status ?? 'OK' })),
-    ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode', status: s.status ?? 'Accepted' })),
-    ...hackerrankPlatform.submissions.map(s => ({ ...s, platform: 'HackerRank', status: s.status ?? 'Accepted' })),
+    ...codeforcesPlatform.submissions.map(s => ({ ...s, platform: 'Codeforces', status: s.verdict ?? 'OK' })),
+    ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode', status: s.statusDisplay ?? 'Accepted' })),
+    ...codechefPlatform.submissions.map(s => ({ ...s, platform: 'CodeChef', status: s.result ?? 'Accepted' })),
   ];
 
   const statusMapping: { [key: string]: string } = {
@@ -204,12 +208,12 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     }).length
     : leetcodePlatform.submissions.length;
 
-  const filteredHackerrankSubmissions = submissionStatusFilter
-    ? hackerrankPlatform.submissions.filter(submission => {
+  const filteredCodechefSubmissions = submissionStatusFilter
+    ? codechefPlatform.submissions.filter(submission => {
       const normalizedStatus = statusMapping[submission.status] || submission.status;
       return normalizedStatus === submissionStatusFilter
     }).length
-    : hackerrankPlatform.submissions.length;
+    : codechefPlatform.submissions.length;
 
   const submissionsByStatus = filteredSubmissions.reduce((acc: {[key: string]: number}, submission) => {
     const status = submission.status;
@@ -225,7 +229,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const submissionsByPlatform = {
     Codeforces: filteredCodeforcesSubmissions,
     LeetCode: filteredLeetcodeSubmissions,
-    HackerRank: filteredHackerrankSubmissions,
+    CodeChef: filteredCodechefSubmissions,
   };
 
   const platformData = Object.keys(submissionsByPlatform).map(platform => ({
@@ -238,7 +242,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
       name: "Submissions",
       codeforcesSubmissions: filteredCodeforcesSubmissions,
       leetcodeSubmissions: filteredLeetcodeSubmissions,
-      hackerrankSubmissions: filteredHackerrankSubmissions,
+      codechefSubmissions: filteredCodechefSubmissions,
     },
   ];
 
@@ -296,12 +300,12 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
           color="border-yellow-200"
         />
         <PlatformCard
-          title="HackerRank"
-          icon={<div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center"><span className="text-green-600 font-bold">HR</span></div>}
-          handle={hackerrankPlatform.handle}
-          setHandle={hackerrankPlatform.setHandle}
-          user={hackerrankPlatform.user}
-          onSubmit={() => hackerrankPlatform.fetchUser(hackerrankPlatform.handle)}
+          title="CodeChef"
+          icon={<div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center"><span className="text-green-600 font-bold">CC</span></div>}
+          handle={codechefPlatform.handle}
+          setHandle={codechefPlatform.setHandle}
+          user={codechefPlatform.user}
+          onSubmit={() => codechefPlatform.fetchUser(codechefPlatform.handle)}
           color="border-green-200"
         />
       </div>
@@ -324,7 +328,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
                 <Legend />
                 <Bar dataKey="codeforcesSubmissions" name={chartConfig.codeforcesSubmissions.label} fill={chartConfig.codeforcesSubmissions.color} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="leetcodeSubmissions" name={chartConfig.leetcodeSubmissions.label} fill={chartConfig.leetcodeSubmissions.color} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="hackerrankSubmissions" name={chartConfig.hackerrankSubmissions.label} fill={chartConfig.hackerrankSubmissions.color} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="codechefSubmissions" name={chartConfig.codechefSubmissions.label} fill={chartConfig.codechefSubmissions.color} radius={[4, 4, 0, 0]} />
               </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
@@ -369,7 +373,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
             <Card className="shadow-sm">
               <CardHeader className="pb-2">
                 <div className="flex items-center space-x-2">
-                  <LineChart className="h-5 w-5 text-indigo-500"/>
+                  <LineChartIcon className="h-5 w-5 text-indigo-500"/>
                   <CardTitle>Codeforces Rating Progression</CardTitle>
                 </div>
               </CardHeader>
@@ -531,9 +535,9 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
                               <span className="text-yellow-600 text-xs font-bold">LC</span>
                             </div>
                           )}
-                          {submission.platform === 'HackerRank' && (
+                          {submission.platform === 'CodeChef' && (
                             <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                              <span className="text-green-600 text-xs font-bold">HR</span>
+                              <span className="text-green-600 text-xs font-bold">CC</span>
                             </div>
                           )}
                           <span>{submission.platform}</span>
@@ -653,6 +657,12 @@ const PlatformCard = <User extends { username?: string; handle?: string; problem
                   <div className="flex justify-between">
                     <span className="text-sm text-slate-500">Problems Solved:</span>
                     <span className="text-sm font-medium">{user.problemsSolved}</span>
+                  </div>
+                )}
+                {user.rating && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-slate-500">Rating:</span>
+                    <span className="text-sm font-medium">{user.rating}</span>
                   </div>
                 )}
               </div>
