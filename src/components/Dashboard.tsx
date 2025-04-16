@@ -33,6 +33,7 @@ import {
   Legend,
   ResponsiveContainer,
   ComposedChart,
+  Line,
 } from 'recharts';
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -59,7 +60,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const handleCodeforcesSubmit = async () => {
     if (codeforcesHandle) {
       const user = await getCodeforcesUser(codeforcesHandle);
-      const submissions = await getCodeforcesSubmissions(codeforcesHandle, 5);
+      const submissions = await getCodeforcesSubmissions(codeforcesHandle, 100);
       setCodeforcesUser(user);
       setCodeforcesSubmissions(submissions);
     }
@@ -68,7 +69,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const handleLeetcodeSubmit = async () => {
     if (leetcodeUsername) {
       const user = await getLeetCodeUser(leetcodeUsername);
-      const submissions = await getLeetCodeSubmissions(leetcodeUsername, 5);
+      const submissions = await getLeetCodeSubmissions(leetcodeUsername, 100);
       setLeetcodeUser(user);
       setLeetcodeSubmissions(submissions);
     }
@@ -77,7 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const handleCodechefSubmit = async () => {
     if (codechefUsername) {
       const user = await getCodeChefUser(codechefUsername);
-      const submissions = await getCodeChefSubmissions(codechefUsername, 5);
+      const submissions = await getCodeChefSubmissions(codechefUsername, 100);
       setCodechefUser(user);
       setCodechefSubmissions(submissions);
     }
@@ -87,14 +88,17 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     codeforcesSubmissions: {
       label: "Codeforces Submissions",
       icon: Icons.file,
+      color: "hsl(var(--chart-1))",
     },
     leetcodeSubmissions: {
       label: "LeetCode Submissions",
       icon: Icons.file,
+      color: "hsl(var(--chart-2))",
     },
     codechefSubmissions: {
       label: "CodeChef Submissions",
       icon: Icons.file,
+      color: "hsl(var(--chart-3))",
     },
   };
 
@@ -105,6 +109,12 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
       leetcodeSubmissions: leetcodeSubmissions.length,
       codechefSubmissions: codechefSubmissions.length,
     },
+  ];
+
+  const allSubmissions = [
+    ...codeforcesSubmissions.map(s => ({ ...s, platform: 'Codeforces' })),
+    ...leetcodeSubmissions.map(s => ({ ...s, platform: 'LeetCode' })),
+    ...codechefSubmissions.map(s => ({ ...s, platform: 'CodeChef' })),
   ];
 
   return (
@@ -185,125 +195,51 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
           <CardTitle>Submissions Chart</CardTitle>
         </CardHeader>
         <CardContent>
-            <ChartContainer config={chartConfig} id="submission-chart">
-              <ComposedChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="codeforcesSubmissions" fill="hsl(var(--chart-1))" />
-                <Bar dataKey="leetcodeSubmissions" fill="hsl(var(--chart-2))" />
-                <Bar dataKey="codechefSubmissions" fill="hsl(var(--chart-3))" />
-              </ComposedChart>
-            </ChartContainer>
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="codeforcesSubmissions" fill="hsl(var(--chart-1))" />
+              <Bar dataKey="leetcodeSubmissions" fill="hsl(var(--chart-2))" />
+              <Bar dataKey="codechefSubmissions" fill="hsl(var(--chart-3))" />
+            </ComposedChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Recent Submissions</CardTitle>
-          <CardContent>
-            <ScrollArea>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[100px]">Platform</TableHead>
-                    <TableHead>Problem</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {codeforcesSubmissions.map((submission) => (
-                    <TableRow key={submission.id}>
-                      <TableCell>Codeforces</TableCell>
-                      <TableCell>{submission.problemName}</TableCell>
-                      <TableCell>{submission.status}</TableCell>
-                    </TableRow>
-                  ))}
-                  {leetcodeSubmissions.map((submission) => (
-                    <TableRow key={submission.timestamp}>
-                      <TableCell>LeetCode</TableCell>
-                      <TableCell>{submission.problemTitle}</TableCell>
-                      <TableCell>{submission.status}</TableCell>
-                    </TableRow>
-                  ))}
-                  {codechefSubmissions.map((submission) => (
-                    <TableRow key={submission.submissionDate}>
-                      <TableCell>CodeChef</TableCell>
-                      <TableCell>{submission.problemCode}</TableCell>
-                      <TableCell>{submission.status}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          </CardContent>
         </CardHeader>
+        <CardContent>
+          <ScrollArea>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Platform</TableHead>
+                  <TableHead>Problem</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allSubmissions.map((submission: any, index: number) => (
+                  <TableRow key={index}>
+                    <TableCell>{submission.platform}</TableCell>
+                    <TableCell>
+                      {submission.problemName || submission.problemTitle || submission.problemCode}
+                    </TableCell>
+                    <TableCell>{submission.status}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </CardContent>
       </Card>
     </div>
-  );
-};
-
-// ChartContainer component
-interface ChartContainerProps {
-  config: any;
-  id: string;
-  children: React.ReactNode;
-}
-
-const ChartContainer: React.FC<ChartContainerProps> = ({ id, config, children }) => {
-  const uniqueId = React.useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
-
-  return (
-    <div data-chart={chartId} className="flex aspect-video justify-center text-xs">
-      <ChartStyle id={chartId} config={config} />
-      <ResponsiveContainer width="100%" height="100%">
-        {children}
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-// ChartStyle component
-interface ChartStyleProps {
-  id: string;
-  config: any;
-}
-
-const ChartStyle: React.FC<ChartStyleProps> = ({ id, config }) => {
-  const THEMES = { light: "", dark: ".dark" } as const;
-
-  const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color
-  );
-
-  if (!colorConfig.length) {
-    return null;
-  }
-
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      (itemConfig.theme as any)?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
   );
 };
 
