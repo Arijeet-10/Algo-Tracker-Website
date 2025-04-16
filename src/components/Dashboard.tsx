@@ -242,6 +242,33 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     },
   ];
 
+    // Difficulty distribution for Codeforces
+    const codeforcesDifficultyData = codeforcesPlatform.submissions.reduce((acc: { [key: string]: number }, submission) => {
+      // Assuming there's a way to determine difficulty, replace with actual logic
+      const difficulty = '800'; // Replace with actual difficulty from submission or problem
+      acc[difficulty] = (acc[difficulty] || 0) + 1;
+      return acc;
+    }, {});
+
+    const difficultyData = Object.keys(codeforcesDifficultyData).map(difficulty => ({
+      name: difficulty,
+      value: codeforcesDifficultyData[difficulty]
+    }));
+
+    // Language distribution for Codeforces
+    const codeforcesLanguageData = codeforcesPlatform.submissions.reduce((acc: { [key: string]: number }, submission) => {
+      // Assuming there's a way to determine language, replace with actual logic
+      const language = 'cpp'; // Replace with actual language from submission
+      acc[language] = (acc[language] || 0) + 1;
+      return acc;
+    }, {});
+
+    const languageData = Object.keys(codeforcesLanguageData).map(language => ({
+      name: language,
+      value: codeforcesLanguageData[language]
+    }));
+
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col space-y-2">
@@ -337,62 +364,123 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
         </Card>
       </div>
 
-      {codeforcesPlatform.ratingHistory.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center space-x-2">
-              <LineChart className="h-5 w-5 text-indigo-500" />
-              <CardTitle>Codeforces Rating Progression</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={codeforcesPlatform.ratingHistory}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="timestamp" 
-                  tickFormatter={(timestamp) => new Date(timestamp * 1000).toLocaleDateString()} 
-                  tick={{ fill: '#6b7280' }}
-                />
-                <YAxis tick={{ fill: '#6b7280' }} />
-                <Tooltip 
-                  labelFormatter={(timestamp) => new Date(timestamp * 1000).toLocaleDateString()}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="rating" 
-                  stroke="#4361ee" 
-                  strokeWidth={2}
-                  dot={{ fill: '#4361ee', strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: '#4361ee' }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {codeforcesPlatform.ratingHistory.length > 0 && (
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <div className="flex items-center space-x-2">
+                  <LineChart className="h-5 w-5 text-indigo-500"/>
+                  <CardTitle>Codeforces Rating Progression</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={codeforcesPlatform.ratingHistory}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
+                    <XAxis
+                      dataKey="timestamp"
+                      tickFormatter={(timestamp) => new Date(timestamp * 1000).toLocaleDateString()}
+                      tick={{fill: '#6b7280'}}
+                    />
+                    <YAxis tick={{fill: '#6b7280'}}/>
+                    <Tooltip
+                      labelFormatter={(timestamp) => new Date(timestamp * 1000).toLocaleDateString()}
+                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="rating"
+                      stroke="#4361ee"
+                      strokeWidth={2}
+                      dot={{fill: '#4361ee', strokeWidth: 2}}
+                      activeDot={{r: 6, fill: '#4361ee'}}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
-      <Card className="shadow-sm">
-        <CardHeader className="pb-2">
-          <div className="flex items-center space-x-2">
-            <BarChart2 className="h-5 w-5 text-indigo-500" />
-            <CardTitle>Submissions by Status</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={statusData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" tick={{ fill: '#6b7280' }} />
-              <YAxis tick={{ fill: '#6b7280' }} />
-              <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-              <Legend />
-              <Bar dataKey="value" name="Submissions" fill="#4361ee" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center space-x-2">
+                <BarChart2 className="h-5 w-5 text-indigo-500"/>
+                <CardTitle>Submissions by Status</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={statusData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
+                  <XAxis dataKey="name" tick={{fill: '#6b7280'}}/>
+                  <YAxis tick={{fill: '#6b7280'}}/>
+                  <Tooltip
+                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}}/>
+                  <Legend/>
+                  <Bar dataKey="value" name="Submissions" fill="#4361ee" radius={[4, 4, 0, 0]}/>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center space-x-2">
+                <BarChart2 className="h-5 w-5 text-indigo-500"/>
+                <CardTitle>Codeforces Difficulty Distribution</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={difficultyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
+                  <XAxis dataKey="name" tick={{fill: '#6b7280'}}/>
+                  <YAxis tick={{fill: '#6b7280'}}/>
+                  <Tooltip
+                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}}/>
+                  <Legend/>
+                  <Bar dataKey="value" name="Difficulty" fill="#82ca9d" radius={[4, 4, 0, 0]}/>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center space-x-2">
+                <PieChartIcon className="h-5 w-5 text-indigo-500"/>
+                <CardTitle>Codeforces Language Distribution</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={languageData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    label
+                  >
+                    {
+                      languageData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]}/>
+                      ))
+                    }
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}}/>
+                  <Legend/>
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
 
       <Card className="shadow-sm">
         <CardHeader className="pb-2">
