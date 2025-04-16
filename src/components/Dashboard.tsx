@@ -113,15 +113,6 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     },
   };
 
-  const data = [
-    {
-      name: "Submissions",
-      codeforcesSubmissions: codeforcesPlatform.submissions.length,
-      leetcodeSubmissions: leetcodePlatform.submissions.length,
-      codechefSubmissions: codechefPlatform.submissions.length,
-    },
-  ];
-
   const allSubmissions = [
     ...codeforcesPlatform.submissions.map(s => ({ ...s, platform: 'Codeforces' })),
     ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode' })),
@@ -131,6 +122,27 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const filteredSubmissions = submissionStatusFilter
     ? allSubmissions.filter(submission => submission.status === submissionStatusFilter)
     : allSubmissions;
+
+  const filteredCodeforcesSubmissions = submissionStatusFilter
+    ? codeforcesPlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
+    : codeforcesPlatform.submissions.length;
+
+  const filteredLeetcodeSubmissions = submissionStatusFilter
+    ? leetcodePlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
+    : leetcodePlatform.submissions.length;
+
+  const filteredCodechefSubmissions = submissionStatusFilter
+    ? codechefPlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
+    : codechefPlatform.submissions.length;
+
+  const data = [
+    {
+      name: "Submissions",
+      codeforcesSubmissions: filteredCodeforcesSubmissions,
+      leetcodeSubmissions: filteredLeetcodeSubmissions,
+      codechefSubmissions: filteredCodechefSubmissions,
+    },
+  ];
 
   return (
     <div className="grid gap-4">
@@ -186,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="">All Statuses</SelectItem>
               <SelectItem value="OK">OK</SelectItem>
               <SelectItem value="Accepted">Accepted</SelectItem>
               <SelectItem value="WRONG_ANSWER">Wrong Answer</SelectItem>
