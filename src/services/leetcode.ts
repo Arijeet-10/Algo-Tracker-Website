@@ -40,7 +40,7 @@ const LEETCODE_API_URL = 'https://leetcode.com/api';
  */
 export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | null> {
   try {
-    const response = await fetch(`https://leetcode.com/graphql/`, {
+    const response = await fetch(`https://leetcode-api-proxy.onrender.com/user/${username}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +73,8 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
     });
 
     if (!response.ok) {
-      console.error(`Failed to fetch LeetCode user for ${username}: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error(`Failed to fetch LeetCode user for ${username}: ${response.status} ${response.statusText} - ${errorBody}`);
       return null;
     }
 
@@ -110,7 +111,7 @@ export async function getLeetCodeSubmissions(
   limit: number
 ): Promise<LeetCodeSubmission[]> {
   try {
-    const response = await fetch(`https://leetcode.com/graphql/`, {
+    const response = await fetch(`https://leetcode-api-proxy.onrender.com/user/${username}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
