@@ -33,6 +33,10 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Line,
+    PieChart,
+    Pie,
+    Cell,
+    BarChart
 } from 'recharts';
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -123,6 +127,8 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
 
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string | null>(null);
 
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
   const chartConfig = {
     codeforcesSubmissions: {
       label: "Codeforces Submissions",
@@ -184,6 +190,28 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
       return normalizedStatus === submissionStatusFilter
     }).length
     : hackerrankPlatform.submissions.length;
+
+    const submissionsByStatus = filteredSubmissions.reduce((acc, submission) => {
+        const status = submission.status;
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+    }, {});
+
+    const statusData = Object.keys(submissionsByStatus).map(status => ({
+        name: status,
+        value: submissionsByStatus[status]
+    }));
+
+    const submissionsByPlatform = {
+        Codeforces: filteredCodeforcesSubmissions,
+        LeetCode: filteredLeetcodeSubmissions,
+        HackerRank: filteredHackerrankSubmissions,
+    };
+
+    const platformData = Object.keys(submissionsByPlatform).map(platform => ({
+        name: platform,
+        value: submissionsByPlatform[platform]
+    }));
 
   const data = [
     {
@@ -258,6 +286,54 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
                 </CardContent>
             </Card>
         )}
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Submissions by Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={statusData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="value" fill="hsl(var(--accent))" />
+                    </BarChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Submissions by Platform</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                        <Pie
+                            data={platformData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            fill="#8884d8"
+                            label
+                        >
+                            {
+                                platformData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))
+                            }
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
