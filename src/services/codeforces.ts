@@ -34,19 +34,33 @@ export interface CodeforcesSubmission {
   submissionTimeSeconds: number;
 }
 
+const CODEFORCES_API_URL = 'https://codeforces.com/api';
+
 /**
  * Asynchronously retrieves a Codeforces user's information.
  *
  * @param handle The Codeforces user's handle.
  * @returns A promise that resolves to a CodeforcesUser object.
  */
-export async function getCodeforcesUser(handle: string): Promise<CodeforcesUser> {
-  // TODO: Implement this by calling the Codeforces API.
-
-  return {
-    handle: handle,
-    rating: 1200,
-  };
+export async function getCodeforcesUser(handle: string): Promise<CodeforcesUser | null> {
+  try {
+    const response = await fetch(`${CODEFORCES_API_URL}/user.info?handles=${handle}`);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    if (data.status !== 'OK' || !data.result || data.result.length === 0) {
+      return null;
+    }
+    const user = data.result[0];
+    return {
+      handle: user.handle,
+      rating: user.rating,
+    };
+  } catch (error) {
+    console.error("Failed to fetch Codeforces user:", error);
+    return null;
+  }
 }
 
 /**
@@ -60,14 +74,29 @@ export async function getCodeforcesSubmissions(
   handle: string,
   count: number
 ): Promise<CodeforcesSubmission[]> {
-  // TODO: Implement this by calling the Codeforces API.
+  try {
+    const response = await fetch(
+      `${CODEFORCES_API_URL}/user.status?handle=${handle}&from=1&count=${count}`
+    );
+    if (!response.ok) {
+      return [];
+    }
+    const data = await response.json();
 
-  return [
-    {
-      id: 123456789,
-      problemName: 'A. Watermelon',
-      status: 'OK',
-      submissionTimeSeconds: 1678886400,
-    },
-  ];
+    if (data.status !== 'OK' || !data.result) {
+      return [];
+    }
+
+    return data.result.map((submission: any) => ({
+      id: submission.id,
+      problemName: submission.problem.name,
+      status: submission.verdict,
+      submissionTimeSeconds: submission.creationTimeSeconds,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch Codeforces submissions:", error);
+    return [];
+  }
 }
+
+    

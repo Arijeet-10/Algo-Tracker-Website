@@ -30,19 +30,53 @@ export interface LeetCodeSubmission {
   timestamp: number;
 }
 
+const LEETCODE_API_URL = 'https://leetcode.com/api';
+
 /**
  * Asynchronously retrieves a LeetCode user's information.
  *
  * @param username The LeetCode user's username.
  * @returns A promise that resolves to a LeetCodeUser object.
  */
-export async function getLeetCodeUser(username: string): Promise<LeetCodeUser> {
-  // TODO: Implement this by calling the LeetCode API.
+export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | null> {
+  try {
+    const response = await fetch(`https://leetcode.com/graphql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+      body: JSON.stringify({
+        query: `
+          query userProfile($username: String!) {
+            userProfile(username: $username) {
+              username
+              numSolved
+            }
+          }
+        `,
+        variables: { username },
+      }),
+    });
 
-  return {
-    username: username,
-    problemsSolved: 150,
-  };
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    if (!data.data?.userProfile) {
+      return null;
+    }
+
+    const userProfile = data.data.userProfile;
+    return {
+      username: userProfile.username,
+      problemsSolved: userProfile.numSolved,
+    };
+  } catch (error) {
+    console.error("Failed to fetch LeetCode user:", error);
+    return null;
+  }
 }
 
 /**
@@ -56,13 +90,46 @@ export async function getLeetCodeSubmissions(
   username: string,
   limit: number
 ): Promise<LeetCodeSubmission[]> {
-  // TODO: Implement this by calling the LeetCode API.
+  try {
+    const response = await fetch(`https://leetcode.com/graphql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+      body: JSON.stringify({
+        query: `
+          query recentAcSubmissions($username: String!, $limit: Int!) {
+            recentAcSubmissions(username: $username, limit: $limit) {
+              title
+              statusDisplay
+              timestamp
+            }
+          }
+        `,
+        variables: { username, limit },
+      }),
+    });
 
-  return [
-    {
-      problemTitle: 'Two Sum',
-      status: 'Accepted',
-      timestamp: 1678886400,
-    },
-  ];
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+
+    if (!data.data?.recentAcSubmissions) {
+      return [];
+    }
+
+    return data.data.recentAcSubmissions.map((submission: any) => ({
+      problemTitle: submission.title,
+      status: submission.statusDisplay,
+      timestamp: submission.timestamp,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch LeetCode submissions:", error);
+    return [];
+  }
 }
+
+    

@@ -30,19 +30,33 @@ export interface CodeChefSubmission {
   submissionDate: string;
 }
 
+const CODECHEF_API_URL = 'https://codechef.com/api/ratings/'; // Replace with the actual API endpoint
+
 /**
  * Asynchronously retrieves a CodeChef user's information.
  *
  * @param username The CodeChef user's username.
  * @returns A promise that resolves to a CodeChefUser object.
  */
-export async function getCodeChefUser(username: string): Promise<CodeChefUser> {
-  // TODO: Implement this by calling the CodeChef API.
-
-  return {
-    username: username,
-    rating: 1800,
-  };
+export async function getCodeChefUser(username: string): Promise<CodeChefUser | null> {
+  try {
+    // Call a 3rd party codechef API since Codechef does not expose a public API.
+    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    if (data.user === null) {
+      return null;
+    }
+    return {
+      username: data.user.username,
+      rating: data.user.currentRating,
+    };
+  } catch (error) {
+    console.error("Failed to fetch CodeChef user:", error);
+    return null;
+  }
 }
 
 /**
@@ -56,13 +70,25 @@ export async function getCodeChefSubmissions(
   username: string,
   limit: number
 ): Promise<CodeChefSubmission[]> {
-  // TODO: Implement this by calling the CodeChef API.
-
-  return [
-    {
-      problemCode: 'INTEST',
-      status: 'accepted',
-      submissionDate: '2023-03-15',
-    },
-  ];
+   try {
+    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`);
+    if (!response.ok) {
+      console.log('Not OK');
+      return [];
+    }
+    const data = await response.json();
+     if (data.submissions === null) {
+      return [];
+    }
+    return data.submissions.slice(0, limit).map((submission: any) => ({
+      problemCode: submission.problemCode,
+      status: submission.result,
+      submissionDate: submission.date,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch CodeChef submissions:", error);
+    return [];
+  }
 }
+
+    
