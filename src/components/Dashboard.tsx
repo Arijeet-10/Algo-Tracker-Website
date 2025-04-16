@@ -33,7 +33,6 @@ import {
   Legend,
   ResponsiveContainer,
   ComposedChart,
-  Line,
 } from 'recharts';
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -42,6 +41,7 @@ interface DashboardProps {}
 
 interface PlatformData<User, Submission> {
   handle: string;
+  setHandle: React.Dispatch<React.SetStateAction<string>>;
   user: User | null;
   submissions: Submission[];
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -68,6 +68,7 @@ const usePlatform = <User, Submission>(
 
   return {
     handle,
+    setHandle,
     user,
     submissions,
     setUser,
@@ -129,21 +130,21 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
         <PlatformCard
           title="Codeforces"
           handle={codeforcesPlatform.handle}
-          setHandle={ (value: string) => codeforcesPlatform.handle = value}
+          setHandle={codeforcesPlatform.setHandle}
           user={codeforcesPlatform.user}
           onSubmit={() => codeforcesPlatform.fetchUser(codeforcesPlatform.handle)}
         />
         <PlatformCard
           title="LeetCode"
           handle={leetcodePlatform.handle}
-          setHandle={ (value: string) => leetcodePlatform.handle = value}
+          setHandle={leetcodePlatform.setHandle}
           user={leetcodePlatform.user}
           onSubmit={() => leetcodePlatform.fetchUser(leetcodePlatform.handle)}
         />
         <PlatformCard
           title="CodeChef"
           handle={codechefPlatform.handle}
-          setHandle={ (value: string) => codechefPlatform.handle = value}
+          setHandle={codechefPlatform.setHandle}
           user={codechefPlatform.user}
           onSubmit={() => codechefPlatform.fetchUser(codechefPlatform.handle)}
         />
@@ -205,7 +206,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
 interface PlatformCardProps<User> {
   title: string;
   handle: string;
-  setHandle: (value: string) => void;
+  setHandle: React.Dispatch<React.SetStateAction<string>>;
   user: User | null;
   onSubmit: () => void;
 }
