@@ -25,6 +25,7 @@ import { Icons } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ChartContainer } from "@/components/ui/chart";
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 interface DashboardProps {}
 
@@ -89,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
 
   const data = [
     {
-      name: "Group A",
+      name: "Submissions",
       codeforcesSubmissions: codeforcesSubmissions.length,
       leetcodeSubmissions: leetcodeSubmissions.length,
       codechefSubmissions: codechefSubmissions.length,
@@ -175,6 +176,14 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} id="submission-chart">
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="codeforcesSubmissions" fill="hsl(var(--chart-1))" />
+            <Bar dataKey="leetcodeSubmissions" fill="hsl(var(--chart-2))" />
+            <Bar dataKey="codechefSubmissions" fill="hsl(var(--chart-3))" />
           </ChartContainer>
         </CardContent>
       </Card>
