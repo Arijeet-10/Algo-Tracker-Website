@@ -24,8 +24,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Icons } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { ChartContainer } from "@/components/ui/chart";
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import {
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ComposedChart,
+} from 'recharts';
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface DashboardProps {}
 
@@ -175,16 +185,18 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
           <CardTitle>Submissions Chart</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} id="submission-chart">
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="codeforcesSubmissions" fill="hsl(var(--chart-1))" />
-            <Bar dataKey="leetcodeSubmissions" fill="hsl(var(--chart-2))" />
-            <Bar dataKey="codechefSubmissions" fill="hsl(var(--chart-3))" />
-          </ChartContainer>
+            <ChartContainer config={chartConfig} id="submission-chart">
+              <ComposedChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="codeforcesSubmissions" fill="hsl(var(--chart-1))" />
+                <Bar dataKey="leetcodeSubmissions" fill="hsl(var(--chart-2))" />
+                <Bar dataKey="codechefSubmissions" fill="hsl(var(--chart-3))" />
+              </ComposedChart>
+            </ChartContainer>
         </CardContent>
       </Card>
 
@@ -230,6 +242,68 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
         </CardHeader>
       </Card>
     </div>
+  );
+};
+
+// ChartContainer component
+interface ChartContainerProps {
+  config: any;
+  id: string;
+  children: React.ReactNode;
+}
+
+const ChartContainer: React.FC<ChartContainerProps> = ({ id, config, children }) => {
+  const uniqueId = React.useId();
+  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+
+  return (
+    <div data-chart={chartId} className="flex aspect-video justify-center text-xs">
+      <ChartStyle id={chartId} config={config} />
+      <ResponsiveContainer width="100%" height="100%">
+        {children}
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+// ChartStyle component
+interface ChartStyleProps {
+  id: string;
+  config: any;
+}
+
+const ChartStyle: React.FC<ChartStyleProps> = ({ id, config }) => {
+  const THEMES = { light: "", dark: ".dark" } as const;
+
+  const colorConfig = Object.entries(config).filter(
+    ([, config]) => config.theme || config.color
+  );
+
+  if (!colorConfig.length) {
+    return null;
+  }
+
+  return (
+    <style
+      dangerouslySetInnerHTML={{
+        __html: Object.entries(THEMES)
+          .map(
+            ([theme, prefix]) => `
+${prefix} [data-chart=${id}] {
+${colorConfig
+  .map(([key, itemConfig]) => {
+    const color =
+      (itemConfig.theme as any)?.[theme as keyof typeof itemConfig.theme] ||
+      itemConfig.color;
+    return color ? `  --color-${key}: ${color};` : null;
+  })
+  .join("\n")}
+}
+`
+          )
+          .join("\n"),
+      }}
+    />
   );
 };
 
