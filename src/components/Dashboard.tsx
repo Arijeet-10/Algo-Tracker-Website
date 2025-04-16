@@ -198,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value={null}>All Statuses</SelectItem>
               <SelectItem value="OK">OK</SelectItem>
               <SelectItem value="Accepted">Accepted</SelectItem>
               <SelectItem value="WRONG_ANSWER">Wrong Answer</SelectItem>
@@ -281,3 +281,5 @@ const PlatformCard = <User extends { username?: string; handle?: string; problem
 };
 
 export default Dashboard;
+
+    
