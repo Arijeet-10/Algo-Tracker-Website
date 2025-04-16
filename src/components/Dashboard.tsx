@@ -43,6 +43,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, User, FileCode, BarChart2, PieChart as PieChartIcon, LineChart as LineChartIcon, AlertCircle } from "lucide-react";
 import _ from 'lodash';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 
 interface DashboardProps {}
 
