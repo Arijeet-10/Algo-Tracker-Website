@@ -73,6 +73,7 @@ export async function getLeetCodeUser(username: string): Promise<LeetCodeUser | 
     });
 
     if (!response.ok) {
+      console.error(`Failed to fetch LeetCode user for ${username}: ${response.status} ${response.statusText}`);
       return null;
     }
 
@@ -132,7 +133,8 @@ export async function getLeetCodeSubmissions(
     });
 
     if (!response.ok) {
-      return [];
+        console.error(`Failed to fetch LeetCode submissions for ${username}: ${response.status} ${response.statusText}`);
+        return [];
     }
 
     const data = await response.json();
