@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { getCodeforcesUser, getCodeforcesSubmissions } from "@/services/codeforces";
 import { getLeetCodeUser, getLeetCodeSubmissions } from "@/services/leetcode";
-import { getCodeChefUser, getCodeChefSubmissions } from "@/services/codechef";
+import { getHackerRankUser, getHackerRankSubmissions } from "@/services/hackerrank";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CodeforcesUser, CodeforcesSubmission } from "@/services/codeforces";
 import { LeetCodeUser, LeetCodeSubmission } from "@/services/leetcode";
-import { CodeChefUser, CodeChefSubmission } from "@/services/codechef";
+import { HackerRankUser, HackerRankSubmission } from "@/services/hackerrank";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Icons } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
@@ -88,9 +88,9 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     getLeetCodeUser,
     getLeetCodeSubmissions
   );
-  const codechefPlatform = usePlatform<CodeChefUser, CodeChefSubmission>(
-    getCodeChefUser,
-    getCodeChefSubmissions
+  const hackerrankPlatform = usePlatform<HackerRankUser, HackerRankSubmission>(
+    getHackerRankUser,
+    getHackerRankSubmissions
   );
 
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string | null>(null);
@@ -106,8 +106,8 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
       icon: Icons.file,
       color: "hsl(var(--chart-2))",
     },
-    codechefSubmissions: {
-      label: "CodeChef Submissions",
+    hackerrankSubmissions: {
+      label: "HackerRank Submissions",
       icon: Icons.file,
       color: "hsl(var(--chart-3))",
     },
@@ -116,7 +116,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const allSubmissions = [
     ...codeforcesPlatform.submissions.map(s => ({ ...s, platform: 'Codeforces' })),
     ...leetcodePlatform.submissions.map(s => ({ ...s, platform: 'LeetCode' })),
-    ...codechefPlatform.submissions.map(s => ({ ...s, platform: 'CodeChef' })),
+    ...hackerrankPlatform.submissions.map(s => ({ ...s, platform: 'HackerRank' })),
   ];
 
   const filteredSubmissions = submissionStatusFilter
@@ -131,16 +131,16 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
     ? leetcodePlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
     : leetcodePlatform.submissions.length;
 
-  const filteredCodechefSubmissions = submissionStatusFilter
-    ? codechefPlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
-    : codechefPlatform.submissions.length;
+  const filteredHackerrankSubmissions = submissionStatusFilter
+    ? hackerrankPlatform.submissions.filter(submission => submission.status === submissionStatusFilter).length
+    : hackerrankPlatform.submissions.length;
 
   const data = [
     {
       name: "Submissions",
       codeforcesSubmissions: filteredCodeforcesSubmissions,
       leetcodeSubmissions: filteredLeetcodeSubmissions,
-      codechefSubmissions: filteredCodechefSubmissions,
+      hackerrankSubmissions: filteredHackerrankSubmissions,
     },
   ];
 
@@ -162,11 +162,11 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
           onSubmit={() => leetcodePlatform.fetchUser(leetcodePlatform.handle)}
         />
         <PlatformCard
-          title="CodeChef"
-          handle={codechefPlatform.handle}
-          setHandle={codechefPlatform.setHandle}
-          user={codechefPlatform.user}
-          onSubmit={() => codechefPlatform.fetchUser(codechefPlatform.handle)}
+          title="HackerRank"
+          handle={hackerrankPlatform.handle}
+          setHandle={hackerrankPlatform.setHandle}
+          user={hackerrankPlatform.user}
+          onSubmit={() => hackerrankPlatform.fetchUser(hackerrankPlatform.handle)}
         />
       </div>
 
@@ -184,7 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
               <Legend />
               <Bar dataKey="codeforcesSubmissions" fill="hsl(var(--chart-1))" />
               <Bar dataKey="leetcodeSubmissions" fill="hsl(var(--chart-2))" />
-              <Bar dataKey="codechefSubmissions" fill="hsl(var(--chart-3))" />
+              <Bar dataKey="hackerrankSubmissions" fill="hsl(var(--chart-3))" />
             </ComposedChart>
           </ResponsiveContainer>
         </CardContent>
@@ -198,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={null}>All Statuses</SelectItem>
+              <SelectItem value="">All Statuses</SelectItem>
               <SelectItem value="OK">OK</SelectItem>
               <SelectItem value="Accepted">Accepted</SelectItem>
               <SelectItem value="WRONG_ANSWER">Wrong Answer</SelectItem>
