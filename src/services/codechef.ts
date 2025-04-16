@@ -41,7 +41,11 @@ const CODECHEF_API_URL = 'https://codechef.com/api/ratings/'; // Replace with th
 export async function getCodeChefUser(username: string): Promise<CodeChefUser | null> {
   try {
     // Call a 3rd party codechef API since Codechef does not expose a public API.
-    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`);
+    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     if (!response.ok) {
       return null;
     }
@@ -71,7 +75,11 @@ export async function getCodeChefSubmissions(
   limit: number
 ): Promise<CodeChefSubmission[]> {
    try {
-    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`);
+    const response = await fetch(`https://cp-api.onrender.com/codechef/${username}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     if (!response.ok) {
       console.log('Not OK');
       return [];
