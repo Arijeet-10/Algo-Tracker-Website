@@ -155,12 +155,12 @@ const Dashboard: React.FC<DashboardProps> = ({}) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Professional color palette
-  const COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'];
+  const COLORS = ['#3b82f6', '#b4ff12', '#8b5cf6', '#a855f7'];
   
   // Platform colors
   const platformColors = {
     Codeforces: "#3b82f6",
-    LeetCode: "#6366f1",
+    LeetCode: "#b4ff12",
     CodeChef: "#8b5cf6"
   };
 
